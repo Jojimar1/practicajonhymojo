@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # Servicio de la aplicación Django (Gunicorn)
+  web:
+    build: .
+    command: gunicorn personalblog.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles  # Volumen compartido para estáticos
+      - media_volume:/app/media          # Volumen compartido para media
+    expose:
+      - "8000"
+    env_file:
+      - .env
+
+  # Servicio Nginx (Proxy Inverso)
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d  # Configuración personalizada
+      - static_volume:/app/staticfiles    # Lee los estáticos que genera 'web'
+      - media_volume:/app/media          # Lee los archivos media
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+volumes:
+  static_volume:
+  media_volume:
